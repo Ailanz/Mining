@@ -12,7 +12,7 @@ public class DBManager
 {
     private String dbLocation = "";
     private OleDbConnection con = null;
-
+    
     public DBManager(string dbLocation)
 	{
         this.dbLocation = dbLocation;
@@ -58,6 +58,15 @@ public class DBManager
         cmd.CommandType = CommandType.Text;
         cmd.Connection = con;
         return cmd.ExecuteReader();
+    }
+
+    public int Insert(string sqlQuery)
+    {
+        OleDbCommand cmd = new OleDbCommand();
+        cmd.CommandText = sqlQuery;
+        cmd.CommandType = CommandType.Text;
+        cmd.Connection = con;
+        return cmd.ExecuteNonQuery();
     }
 
     public List<String> GetColumnNames(String tableName)
