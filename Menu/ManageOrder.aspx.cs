@@ -11,34 +11,48 @@ using System.Web.UI.WebControls;
 public partial class Menu_ManageOrder : System.Web.UI.Page
 {
     MenuDbManager db = null;
+
+    protected override void OnInit(EventArgs e)
+    {
+        base.OnInit(e);
+    }
     protected void Page_Load(object sender, EventArgs e)
     {
         this.Page.ViewStateMode = System.Web.UI.ViewStateMode.Enabled;
-        String dbLocation = Server.MapPath(Path.Combine("~/App_Data/", Constants.DB_NAME));
-        db = new MenuDbManager(dbLocation);
+        db = new MenuDbManager(DBManager.defaultDbLocation);
         db.Connect();
-        GetServerList();
+
+        if (!IsPostBack)
+        {
+            GetServerList();
+            menuItemsList.DataSource = GetMenuItems();
+            menuItemsList.DataBind();
+        }
 
         if (ViewState[Constants.Items] == null)
         {
             ViewState[Constants.Items] = new Dictionary<MenuItem, int>();
         }
+    }
 
-
-        if (itemListPanel.Controls.Count == 1)
+    protected DataTable ConvertToDataTable(Dictionary<MenuItem, int> dic)
+    {
+        DataTable tb = new DataTable();
+        tb.Columns.Add("Quantity");
+        tb.Columns.Add("Item");
+        foreach(var r in dic)
         {
-            DropDownList menuItems = new DropDownList();
-            menuItems.CssClass = "form-control";
-            menuItems.DataSource = GetMenuItems();
-            menuItems.DataBind();
-            menuItems.Attributes[Constants.Attributes] = Constants.Attributes;
-            itemListPanel.Controls.Add(menuItems);
+            var row = tb.NewRow();
+            row["Quantity"] = r.Value;
+            row["Item"] = r.Key.itemName;
+            tb.Rows.Add(row);
         }
+        return tb;
     }
 
     protected IEnumerable<String> GetMenuItems()
     {
-        MenuItemFactory menuFactory = (MenuItemFactory)Session[Constants.MenuItems];
+        MenuItemFactory menuFactory = (MenuItemFactory)Session[Constants.MenuItemsFactory];
         var results = from item in menuFactory.itemList
                       select item.itemName;
 
@@ -47,39 +61,50 @@ public partial class Menu_ManageOrder : System.Web.UI.Page
 
     protected void GetServerList()
     {
-        ServerFactory serverFactory = (ServerFactory)Session[Constants.Servers];
+        ServerFactory serverFactory = (ServerFactory)Session[Constants.ServersFactory];
 
         foreach (Server s in serverFactory.serverList)
         {
             ListItem item = new ListItem(s.firstname + " " + s.lastname);
             item.Attributes.Add(Constants.ID, s.id.ToString());
+            item.Value = s.id.ToString();
             serverList.Items.Add(item);
         }
     }
 
     protected void UpdateOrderTable()
     {
-        DataTable orderTable = new DataTable();
-        OleDbDataReader dataReader = db.GetTable(MenuDbManager.Table.ORDERS);
-
-        orderTable.Load(dataReader);
+        DataTable orderTable = db.GetTable(MenuDbManager.Table.ORDERS);
         orderList.DataSource = orderTable;
         orderList.ShowHeader = true;
         orderList.DataBind();
     }
     protected void submit_Click(object sender, EventArgs e)
     {
-        List<int> addedItemsList = (List<int>)ViewState[Constants.Controls];
-        var result = from c in this.Controls.OfType<DropDownList>()
-                     where c.Attributes[Constants.Attributes].Equals(Constants.Attributes)
-                     select c;
-        result.First().Enabled = false;
+        OrderFactory orderFactory = (OrderFactory)Session[Constants.OrderFactory];
+        ServerFactory serverFactory = (ServerFactory)Session[Constants.ServersFactory];
         
+        List<KeyValuePair<int, int>> itemId_AmountList = new List<KeyValuePair<int, int>>();
+        foreach (var kv in (Dictionary<MenuItem, int>)ViewState[Constants.Items])
+        {
+            itemId_AmountList.Add(new KeyValuePair<int, int>(kv.Key.id, kv.Value));
+        }
+        orderFactory.CreateOrder(Convert.ToInt16(serverList.SelectedValue), DateTime.Parse(calendar.Text), mealType.SelectedItem.Text, itemId_AmountList);
+        calendar.Text = "";
+        mealType.SelectedIndex = 0;
+        serverList.SelectedIndex = 0;
+        menuItemsList.SelectedIndex = 0;
+        ViewState[Constants.Items] = new Dictionary<MenuItem, int>();
     }
     protected void addItem_Click(object sender, EventArgs e)
     {
-        //ViewState[Constants.Items];
-
+        MenuItemFactory factory = (MenuItemFactory)Session[Constants.MenuItemsFactory];
+        MenuItem item = factory.GetMenuItem(menuItemsList.SelectedItem.Text);
+        ((Dictionary<MenuItem, int>)ViewState[Constants.Items]).Add(item, Convert.ToInt16(quantity.SelectedValue));
+        orderList.DataSource = ConvertToDataTable(((Dictionary<MenuItem, int>)ViewState[Constants.Items]));
+        orderList.DataBind();
+        quantity.SelectedIndex = 0;
+        menuItemsList.SelectedIndex = 0;
     }
 
 }

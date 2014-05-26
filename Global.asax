@@ -26,12 +26,15 @@
 
         ServerFactory servers = new ServerFactory();
         servers.LoadServers();
-        Session[Constants.Servers] = servers;
+        Session[Constants.ServersFactory] = servers;
 
         MenuItemFactory items = new MenuItemFactory();
         items.LoadMenuItems();
-        Session[Constants.MenuItems] = items;
+        Session[Constants.MenuItemsFactory] = items;
 
+        OrderFactory orders = new OrderFactory();
+        orders.LoadOrders();
+        Session[Constants.OrderFactory] = orders;
     }
 
     void Session_End(object sender, EventArgs e) 

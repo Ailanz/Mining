@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.OleDb;
 using System.Linq;
 using System.Web;
+using System.Web.Hosting;
 
 /// <summary>
 /// Summary description for DBManager
@@ -12,7 +13,13 @@ public class DBManager
 {
     private String dbLocation = "";
     private OleDbConnection con = null;
-    
+    public static String defaultDbLocation = "";
+
+    static DBManager()
+    {
+        DBManager.defaultDbLocation = HostingEnvironment.MapPath(System.IO.Path.Combine("~/App_Data/", Constants.DB_NAME));
+    }
+
     public DBManager(string dbLocation)
 	{
         this.dbLocation = dbLocation;

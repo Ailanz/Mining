@@ -75,7 +75,7 @@ public class Operand
         return cloned;
     }
 
-    public String ToString()
+    public override String ToString()
     {
         String result = null;
         foreach (var kv in this.GetEqualRules())

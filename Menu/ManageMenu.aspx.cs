@@ -23,7 +23,7 @@ public partial class ManageMenu : System.Web.UI.Page
     protected void submit_Click(object sender, EventArgs e)
     {
         MenuItem item = new MenuItem(itemName.Text, itemType.Text, Convert.ToDouble(price.Text), Convert.ToDouble(cost.Text));
-        MenuItemFactory factory = (MenuItemFactory)Session[Constants.MenuItems];
+        MenuItemFactory factory = (MenuItemFactory)Session[Constants.MenuItemsFactory];
         factory.CreateMenuItem(item);
         itemName.Text = "";
         itemType.SelectedIndex = 0;
@@ -35,8 +35,7 @@ public partial class ManageMenu : System.Web.UI.Page
     protected void updateMenuItems()
     {
         DataTable menuTable = new DataTable();
-        OleDbDataReader dataReader = db.GetTable(MenuDbManager.Table.MENU);
-        menuTable.Load(dataReader);
+        menuTable = db.GetTable(MenuDbManager.Table.MENU);
         menuItems.DataSource = menuTable;
         menuItems.ShowHeader = true;
         menuItems.DataBind();

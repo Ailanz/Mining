@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -11,6 +12,7 @@ using System.Web.Hosting;
 public class ServerFactory
 {
     public List<Server> serverList = new List<Server>();
+    private DataTable dataTable = null;
 	public ServerFactory()
 	{
 		//
@@ -25,8 +27,7 @@ public class ServerFactory
 
     public void CreateServer(string firstname, string lastname, int age, char sex)
     {
-        String dbLocation = HostingEnvironment.MapPath(Path.Combine("~/App_Data/", Constants.DB_NAME));
-        MenuDbManager db = new MenuDbManager(dbLocation);
+        MenuDbManager db = new MenuDbManager(DBManager.defaultDbLocation);
         db.Connect();
         db.InsertServer(firstname, lastname, age, sex);
         db.Close();
@@ -44,22 +45,29 @@ public class ServerFactory
         CreateServer(server.firstname, server.lastname, server.age, server.sex);
     }
 
+    public DataTable GetServerDataTable()
+    {
+        if(dataTable == null)
+        {
+            throw new Exception("Server DataTable not initialized");
+        }
+        return dataTable;
+    }
+
     public void LoadServers()
     {
-        String dbLocation = HostingEnvironment.MapPath(System.IO.Path.Combine("~/App_Data/", Constants.DB_NAME));
-        MenuDbManager db = new MenuDbManager(dbLocation);
+        MenuDbManager db = new MenuDbManager(DBManager.defaultDbLocation);
         db.Connect();
-
-        System.Data.OleDb.OleDbDataReader dataReader = db.GetTable(MenuDbManager.Table.SERVER);
+        dataTable = db.GetTable(MenuDbManager.Table.SERVER);
         // Load all Servers into Session Variable
-        while (dataReader.Read())
+        foreach(DataRow r in dataTable.Rows)
         {
             Server server = new Server();
-            server.id = Convert.ToInt16(dataReader["ID"]);
-            server.firstname = dataReader["FIRST_NAME"].ToString();
-            server.lastname = dataReader["LAST_NAME"].ToString();
-            server.age = Convert.ToInt16(dataReader["AGE"]);
-            server.sex = Convert.ToChar(dataReader["SEX"]);
+            server.id = Convert.ToInt16(r["ID"]);
+            server.firstname = r["FIRST_NAME"].ToString();
+            server.lastname = r["LAST_NAME"].ToString();
+            server.age = Convert.ToInt16(r["AGE"]);
+            server.sex = Convert.ToChar(r["SEX"]);
             serverList.Add(server);
         }
 

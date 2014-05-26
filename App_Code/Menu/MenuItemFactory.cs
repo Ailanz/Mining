@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -11,12 +12,14 @@ using System.Web.Hosting;
 public class MenuItemFactory
 {
     public List<MenuItem> itemList = new List<MenuItem>();
-	public MenuItemFactory()
-	{
-		//
-		// TODO: Add constructor logic here
-		//
-	}
+    private DataTable dataTable = null;
+
+    public MenuItemFactory()
+    {
+        //
+        // TODO: Add constructor logic here
+        //
+    }
 
     public void Add(MenuItem item)
     {
@@ -37,8 +40,7 @@ public class MenuItemFactory
 
     public void CreateMenuItem(string itemName, string type, double price, double cost)
     {
-        String dbLocation = HostingEnvironment.MapPath(Path.Combine("~/App_Data/", Constants.DB_NAME));
-        MenuDbManager db = new MenuDbManager(dbLocation);
+        MenuDbManager db = new MenuDbManager(DBManager.defaultDbLocation);
         db.Connect();
         db.InsertMenu(itemName, type, price, cost);
         db.Close();
@@ -51,25 +53,28 @@ public class MenuItemFactory
         CreateMenuItem(item.itemName, item.type, item.price, item.cost);
     }
 
+    public DataTable GetMenuDataTable()
+    {
+        return this.dataTable;
+    }
+
     public void LoadMenuItems()
     {
-        String dbLocation = HostingEnvironment.MapPath(System.IO.Path.Combine("~/App_Data/", Constants.DB_NAME));
-        MenuDbManager db = new MenuDbManager(dbLocation);
+        MenuDbManager db = new MenuDbManager(DBManager.defaultDbLocation);
         db.Connect();
 
-        System.Data.OleDb.OleDbDataReader dataReader = db.GetTable(MenuDbManager.Table.MENU);
-        // Load all MenuItems into Session Variable
-        while (dataReader.Read())
+        dataTable = db.GetTable(MenuDbManager.Table.MENU);
+
+        foreach (DataRow row in dataTable.Rows)
         {
             MenuItem item = new MenuItem();
-            item.id = Convert.ToInt16(dataReader["ID"]);
-            item.itemName = dataReader["ITEM_NAME"].ToString();
-            item.type = dataReader["TYPE"].ToString();
-            item.price = Convert.ToDouble(dataReader["PRICE"]);
-            item.cost = Convert.ToDouble(dataReader["COST"]);
+            item.id = Convert.ToInt16(row["ID"]);
+            item.itemName = row["ITEM_NAME"].ToString();
+            item.type = row["TYPE"].ToString();
+            item.price = Convert.ToDouble(row["PRICE"]);
+            item.cost = Convert.ToDouble(row["COST"]);
             itemList.Add(item);
         }
-
         db.Close();
     }
 }

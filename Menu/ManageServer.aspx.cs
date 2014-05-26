@@ -37,8 +37,7 @@ public partial class Menu_ManageServer : System.Web.UI.Page
     protected void updateServerTable()
     {        
         DataTable serverTable = new DataTable();
-        OleDbDataReader dataReader = db.GetTable(MenuDbManager.Table.SERVER);
-        serverTable.Load(dataReader);
+        serverTable = db.GetTable(MenuDbManager.Table.SERVER);
         serverList.DataSource = serverTable;
         serverList.ShowHeader = true;
         serverList.DataBind();
